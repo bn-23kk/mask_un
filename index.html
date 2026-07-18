@@ -23,7 +23,7 @@
             border: 1px solid rgba(255, 255, 255, 0.08);
         }
         .progress-bar-fill {
-            transition: width 0.1s linear; /* ปรับแอนิเมชันให้ไหลลื่นขึ้นสำหรับเวลา 3 วินาที */
+            transition: width 0.05s linear; /* ปรับให้หลอดอนิเมชันวิ่งนิ่มนวลขึ้นสำหรับระดับวินาที */
         }
         /* ปรับแต่ง Style ของ Canvas กล้องให้สวยงาม */
         #webcam-container canvas {
@@ -133,14 +133,13 @@
     <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
     
     <script type="text/javascript">
-        // ลิงก์โมเดล Teachable Machine ของคุณ[cite: 1]
+        // ลิงก์โมเดล Teachable Machine[cite: 1]
         const URL = "https://teachablemachine.withgoogle.com/models/NkV0wZWoR1/";
 
         let model, webcam, labelContainer, maxPredictions;
         let countdownInterval;
         
-        // แก้ไขที่นี่: ปรับความถี่เป็น 3 วินาที (เปลี่ยนจาก 180 เป็น 3)
-        let countdownSeconds = 3; 
+        // ตั้งค่าตัวแปรเวลาเป็น 3 วินาทีถ้วน
         const TOTAL_INTERVAL = 3; 
 
         // ฟังก์ชันเริ่มต้นระบบเมื่อผู้ใช้กดปุ่ม Start[cite: 1]
@@ -175,7 +174,7 @@
                 webcamBox.appendChild(webcam.canvas);[cite: 1]
 
                 statusIndicator.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Auto Monitoring Active`;
-                statusIndicator.className = "inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-amber-500/20";
+                statusIndicator.className = "inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
                 
                 startBtn.innerText = "ระบบทำงานอัตโนมัติเรียบร้อย";
 
@@ -197,13 +196,13 @@
                     labelContainer.appendChild(row);[cite: 1]
                 }
 
-                // สตรีมภาพกล้องสดลื่นๆ บนจอ[cite: 1]
+                // สตรีมภาพกล้องสดแบบต่อเนื่องลื่นไหลบน UI[cite: 1]
                 window.requestAnimationFrame(webcamLoop);[cite: 1]
 
-                // วิเคราะห์ครั้งแรกทันที
+                // ทำการคำนวณทำนายผลทันทีในวินาทีแรกที่เปิดใช้งาน
                 await performInference();
 
-                // เริ่มลูปนับเวลาถอยหลังแบบความถี่สูง
+                // เริ่มลูปจับเวลาและตัวหลอดวิ่งนับถอยหลังความละเอียดสูง
                 startTimerLoop();
 
             } catch (error) {
@@ -216,40 +215,43 @@
         }
 
         async function webcamLoop() {
-            webcam.update(); // อัปเดตเฟรมกล้องแบบเรียลไทม์[cite: 1]
+            webcam.update(); // ดึงเฟรมภาพปัจจุบันของเว็บแคมตลอดเวลา[cite: 1]
             window.requestAnimationFrame(webcamLoop);[cite: 1]
         }
 
-        // ตัวคุมเวลาหลัก ปรับปรุงให้ตรวจเช็คย่อยในระดับเสี้ยววินาทีเพื่อให้การเคลื่อนไหวของแถบพลังลื่นไหลขึ้น
+        // ระบบจับเวลานับถอยหลังความแม่นยำสูง (ตรวจเช็คทุกๆ 50ms เพื่อให้เข็มวินาทีและแถบพลังเลื่อนไหลเสมือนจริง)
         function startTimerLoop() {
             let startTime = Date.now();
             
             if(countdownInterval) clearInterval(countdownInterval);
 
             countdownInterval = setInterval(async () => {
-                let elapsedTime = (Date.now() - startTime) / 1000; // เวลาที่ผ่านไปเป็นวินาที
+                let elapsedTime = (Date.now() - startTime) / 1000; 
                 let remainingTime = TOTAL_INTERVAL - elapsedTime;
 
                 if (remainingTime <= 0) {
-                    await performInference(); // AI ประมวลผลเมื่อครบ 3 วินาที
-                    startTime = Date.now(); // รีเซ็ตจุดเริ่มต้นเวลาใหม่
+                    // เมื่อเวลาเดินครบ 3 วินาที ให้สั่งสั่งถ่ายภาพและประมวลผลทันที
+                    await performInference(); 
+                    startTime = Date.now(); // รีเซ็ตเวลาเริ่มต้นใหม่สำหรับรอบถัดไป
                     remainingTime = TOTAL_INTERVAL;
                 }
 
-                // อัปเดตหน้าจอตัวเลขและ Progress Bar
+                // สั่งอัปเดตตัวเลขวิเคราะห์และตัวความยาว Progress bar บนหน้าจอ
                 updateTimerUI(remainingTime);
-            }, 50); // ตรวจสอบสถานะทุกๆ 50ms เพื่อให้หลอดลดลงแบบเนียนๆ
+            }, 50); 
         }
 
         function updateTimerUI(remaining) {
+            // ควบคุมการแสดงผลตัวเลข เช่น 3.0, 2.5, 1.2 วินาทีบน Dashboard
             const displayTime = Math.max(0, remaining).toFixed(1);
             document.getElementById("countdown-text").innerText = `00:0${Math.ceil(remaining)}`;
 
+            // คำนวณเปอร์เซ็นต์ความก้าวหน้าเพื่อดึงหลอดสีให้ขยับตามเวลา
             const percentageElapsed = ((TOTAL_INTERVAL - remaining) / TOTAL_INTERVAL) * 100;
             document.getElementById("progress-bar").style.width = `${percentageElapsed}%`;
         }
 
-        // ฟังก์ชันสั่งให้โมเดลทำนายผลลัพธ์ภาพ[cite: 1]
+        // ฟังก์ชันประมวลผลวิเคราะห์รูปภาพผ่านระบบ AI (Inference Mechanism)[cite: 1]
         async function performInference() {
             if (!model || !webcam) return;
 
@@ -268,6 +270,7 @@
                 const bar = targetNode.querySelector(".class-bar");
                 bar.style.width = displayPercentage;
                 
+                // เปลี่ยนสีแถบพลังแบบไดนามิกตามความมั่นใจของตัวแบบจำลอง (Confidence Weights)
                 if (probability > 0.7) {
                     bar.className = "h-full class-bar transition-all duration-300 bg-gradient-to-r from-emerald-500 to-teal-400";
                 } else if (probability > 0.3) {
@@ -277,10 +280,11 @@
                 }
             }
 
+            // บันทึกเวลาแสตมป์นาทีและวินาทีปัจจุบันที่ระบุผลวิเคราะห์สำเร็จ
             const now = new Date();
             document.getElementById("last-update-time").innerText = `อัปเดตล่าสุด: ${now.toLocaleTimeString('th-TH')}`;
 
-            // กะพริบแจ้งเตือนสถานะความสำเร็จ
+            // ทำสถานะไฟกระพริบสั้นๆ (Flash Sign) เป็นการส่งสัญญาณว่าพึ่งรันคำนวณเสร็จ
             const indicator = document.getElementById("flash-indicator");
             indicator.style.opacity = "1";
             setTimeout(() => { indicator.style.opacity = "0"; }, 600);
