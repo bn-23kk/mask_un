@@ -4,9 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Vision Dashboard - Teachable Machine</title>
-    <!-- เรียกใช้งาน Tailwind CSS เพื่อโครงสร้าง UI ที่สวยงามและรองรับ Responsive -->
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <!-- นำเข้าฟอนต์สไตล์โมเดิร์น (Inter และ Prompt สำหรับภาษาไทย) -->
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -23,16 +23,13 @@
             border: 1px solid rgba(255, 255, 255, 0.08);
         }
         .progress-bar-fill {
-            transition: width 0.05s linear; /* ปรับให้หลอดอนิเมชันวิ่งนิ่มนวลขึ้นสำหรับระดับวินาที */
+            transition: width 0.05s linear;
         }
-        /* ปรับแต่ง Style ของ Canvas กล้องให้สวยงาม */
-        #webcam-container canvas {
-            width: 100% !important;
-            height: auto !important;
-            border-radius: 12px;
-            border: 2px solid rgba(99, 102, 241, 0.3);
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
-            transform: scaleX(-1); /* กลับด้านกระจกเพื่อให้ผู้ใช้งานส่องได้เป็นธรรมชาติ */
+        video {
+            transform: scaleX(-1); /* กลับด้านกระจกเพื่อความคุ้นเคย */
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
     </style>
 </head>
@@ -49,30 +46,32 @@
             </div>
             <div>
                 <span id="system-status" class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium bg-slate-800 text-slate-400 border border-slate-700">
-                    <span class="w-2 h-2 rounded-full bg-slate-500 animate-pulse"></span>
-                    Ready to Start
+                    <span class="w-2 h-2 rounded-full bg-slate-500"></span>
+                    สแตนด์บายรอเปิดระบบ
                 </span>
             </div>
         </div>
     </header>
 
+    <!-- Error Alert Banner (ซ่อนไว้ก่อน จะแสดงเมื่อเกิดปัญหา) -->
+    <div id="error-banner" class="w-full max-w-5xl mx-auto mb-6 bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-xl text-sm hidden">
+        <strong>พบข้อผิดพลาด:</strong> <span id="error-message"></span>
+    </div>
+
     <!-- Main Content Area -->
     <main class="w-full max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-6 items-start flex-grow">
         
-        <!-- Left Column: Webcam Stream -->
+        <!-- Left Column: Camera Screen -->
         <div class="md:col-span-5 glass-panel p-6 rounded-2xl flex flex-col items-center">
             <h2 class="text-lg font-semibold text-slate-200 mb-4 self-start flex items-center gap-2">
                 <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
-                Live Camera Stream
+                กล้องวิดีโอสด
             </h2>
             
-            <!-- Webcam Container -->
-            <div class="relative w-full aspect-square max-w-[280px] bg-slate-950 rounded-xl flex items-center justify-center overflow-hidden border border-slate-800 mb-6">
-                <div id="webcam-placeholder" class="absolute inset-0 flex flex-col items-center justify-center text-slate-500 p-4 text-center">
-                    <svg class="w-12 h-12 mb-2 text-slate-600 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
-                    <p class="text-xs">กรุณากดปุ่มด้านล่างเพื่อเปิดกล้องและเริ่มระบบ</p>
-                </div>
-                <div id="webcam-container" class="w-full h-full hidden"></div>
+            <!-- Webcam HTML5 Container -->
+            <div class="relative w-full aspect-square max-w-[280px] bg-slate-950 rounded-xl flex items-center justify-center overflow-hidden border border-indigo-500/30 shadow-lg shadow-indigo-500/5 mb-6">
+                <!-- ใช้ Video Tag ตรงๆ เพื่อความเสถียรสูงสุด -->
+                <video id="webcam-video" autoplay playsinline muted></video>
             </div>
 
             <!-- Start Button -->
@@ -81,7 +80,7 @@
             </button>
         </div>
 
-        <!-- Right Column: Results and Timer Dashboard -->
+        <!-- Right Column: Results Dashboard -->
         <div class="md:col-span-7 space-y-6">
             
             <!-- Timer Countdown Card -->
@@ -125,62 +124,69 @@
 
     <!-- Footer -->
     <footer class="w-full text-center text-xs text-slate-600 mt-8 border-t border-slate-900 pt-4">
-        Powered by TensorFlow.js & Teachable Machine • Optimized UI Architecture
+        Powered by TensorFlow.js & Teachable Machine • Robust Camera Protocol
     </footer>
 
-    <!-- TensorFlow.js and Teachable Machine Libraries -->
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+    <!-- โหลดไลบรารีเวอร์ชันที่เสถียรที่สุด -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.18.0/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@0.8.5/dist/teachablemachine-image.min.js"></script>
     
     <script type="text/javascript">
-        // ลิงก์โมเดล Teachable Machine[cite: 1]
-        const URL = "https://teachablemachine.withgoogle.com/models/NkV0wZWoR1/";
+        // ลิงก์โมเดลของคุณ[cite: 1]
+        const MODEL_URL = "https://teachablemachine.withgoogle.com/models/NkV0wZWoR1/";
 
-        let model, webcam, labelContainer, maxPredictions;
+        let model, maxPredictions, labelContainer;
         let countdownInterval;
-        
-        // ตั้งค่าตัวแปรเวลาเป็น 3 วินาทีถ้วน
-        const TOTAL_INTERVAL = 3; 
+        const TOTAL_INTERVAL = 3; // 3 วินาที
 
-        // ฟังก์ชันเริ่มต้นระบบเมื่อผู้ใช้กดปุ่ม Start[cite: 1]
+        // ฟังก์ชันซ่อน/แสดงหน้าต่างแจ้ง Error
+        function showError(msg) {
+            const banner = document.getElementById("error-banner");
+            document.getElementById("error-message").innerText = msg;
+            banner.classList.remove("hidden");
+        }
+
+        // ฟังก์ชันหลักเริ่มทำงาน
         async function initSystem() {
             const startBtn = document.getElementById("start-btn");
             const statusIndicator = document.getElementById("system-status");
+            const videoElement = document.getElementById("webcam-video");
             
+            // ล้างหน้าต่างแจ้ง Error เดิมถ้ามี
+            document.getElementById("error-banner").classList.add("hidden");
+
             startBtn.disabled = true;
-            startBtn.innerText = "กำลังดาวน์โหลดโมเดล AI...";
+            startBtn.innerText = "กำลังเชื่อมต่อระบบ...";
             startBtn.className = "w-full bg-slate-800 text-slate-500 font-medium py-3 px-6 rounded-xl cursor-not-allowed text-center";
             
-            statusIndicator.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span> Loading Model`;
-            statusIndicator.className = "inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20";
+            statusIndicator.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span> โหลดโมเดล...`;
 
             try {
-                const modelURL = URL + "model.json";[cite: 1]
-                const metadataURL = URL + "metadata.json";[cite: 1]
-
-                // โหลดโมเดล AI[cite: 1]
-                model = await tmImage.load(modelURL, metadataURL);[cite: 1]
+                // 1. โหลดโมเดล AI
+                const modelJson = MODEL_URL + "model.json";[cite: 1]
+                const metadataJson = MODEL_URL + "metadata.json";[cite: 1]
+                model = await tmImage.load(modelJson, metadataJson);[cite: 1]
                 maxPredictions = model.getTotalClasses();[cite: 1]
 
-                // ตั้งค่ากล้องเว็บแคม[cite: 1]
-                const flip = true;[cite: 1]
-                webcam = new tmImage.Webcam(280, 280, flip);[cite: 1]
-                await webcam.setup();[cite: 1]
-                await webcam.play();[cite: 1]
+                // 2. เรียกเปิดกล้องเว็บแคมผ่านสิทธิ์ดั้งเดิมของเบราว์เซอร์ (Native Web API) เพื่อความชัวร์
+                if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                    const stream = await navigator.mediaDevices.getUserMedia({
+                        video: { width: 280, height: 280, facingMode: "user" },
+                        audio: false
+                    });
+                    videoElement.srcObject = stream;
+                } else {
+                    throw new Error("เบราว์เซอร์นี้ไม่รองรับระบบการเข้าถึงกล้อง (Webcam API)");
+                }
 
-                document.getElementById("webcam-placeholder").classList.add("hidden");
-                const webcamBox = document.getElementById("webcam-container");
-                webcamBox.classList.remove("hidden");
-                webcamBox.appendChild(webcam.canvas);[cite: 1]
-
-                statusIndicator.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Auto Monitoring Active`;
+                // 3. ปรับเปลี่ยนสถานะ UI บนหน้าจอ
+                statusIndicator.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> ตรวจจับอัตโนมัติ`;
                 statusIndicator.className = "inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
-                
-                startBtn.innerText = "ระบบทำงานอัตโนมัติเรียบร้อย";
+                startBtn.innerText = "ระบบกำลังตรวจจับทุกๆ 3 วินาที";
 
+                // 4. สร้างการ์ดแสดงเปอร์เซ็นต์
                 labelContainer = document.getElementById("label-container");[cite: 1]
                 labelContainer.innerHTML = "";
-                
                 for (let i = 0; i < maxPredictions; i++) {[cite: 1]
                     const row = document.createElement("div");
                     row.className = "bg-slate-900/60 p-3.5 rounded-xl border border-slate-800 flex flex-col gap-1.5";
@@ -190,72 +196,62 @@
                             <span class="font-mono text-xs font-bold text-indigo-400 class-percentage">0.00%</span>
                         </div>
                         <div class="w-full bg-slate-950 h-2 rounded-full overflow-hidden">
-                            <div class="bg-indigo-500 h-full w-0 class-bar transition-all duration-500"></div>
+                            <div class="bg-indigo-500 h-full w-0 class-bar transition-all duration-300"></div>
                         </div>
                     `;
                     labelContainer.appendChild(row);[cite: 1]
                 }
 
-                // สตรีมภาพกล้องสดแบบต่อเนื่องลื่นไหลบน UI[cite: 1]
-                window.requestAnimationFrame(webcamLoop);[cite: 1]
-
-                // ทำการคำนวณทำนายผลทันทีในวินาทีแรกที่เปิดใช้งาน
+                // สั่งวิเคราะห์รอบแรกทันทีเมื่อเปิดระบบสำเร็จ
                 await performInference();
 
-                // เริ่มลูปจับเวลาและตัวหลอดวิ่งนับถอยหลังความละเอียดสูง
+                // 5. เริ่มต้นลูปนับถอยหลัง 3 วินาที
                 startTimerLoop();
 
             } catch (error) {
-                console.error("Initialization Failed:", error);
-                alert("ไม่สามารถเข้าถึงกล้องถ่ายภาพ หรือดาวน์โหลดโมเดลได้สำเร็จ");
+                console.error("System Error:", error);
+                showError(error.message || "ไม่สามารถดึงข้อมูลกล้องได้ กรุณาตรวจสอบการอนุญาตให้สิทธิ์ใช้งานกล้อง");
+                
+                // คืนสถานะปุ่มกดให้กดใหม่ได้
                 startBtn.disabled = false;
                 startBtn.innerText = "ลองใหม่อีกครั้ง";
                 startBtn.className = "w-full bg-gradient-to-r from-indigo-500 to-indigo-600 text-white font-medium py-3 px-6 rounded-xl cursor-pointer";
+                statusIndicator.innerHTML = `<span class="w-2 h-2 rounded-full bg-red-500"></span> ระบบขัดข้อง`;
             }
         }
 
-        async function webcamLoop() {
-            webcam.update(); // ดึงเฟรมภาพปัจจุบันของเว็บแคมตลอดเวลา[cite: 1]
-            window.requestAnimationFrame(webcamLoop);[cite: 1]
-        }
-
-        // ระบบจับเวลานับถอยหลังความแม่นยำสูง (ตรวจเช็คทุกๆ 50ms เพื่อให้เข็มวินาทีและแถบพลังเลื่อนไหลเสมือนจริง)
+        // ระบบจับเวลานับถอยหลัง 3 วินาทีประสิทธิภาพสูง
         function startTimerLoop() {
             let startTime = Date.now();
-            
             if(countdownInterval) clearInterval(countdownInterval);
 
             countdownInterval = setInterval(async () => {
-                let elapsedTime = (Date.now() - startTime) / 1000; 
+                let elapsedTime = (Date.now() - startTime) / 1000;
                 let remainingTime = TOTAL_INTERVAL - elapsedTime;
 
                 if (remainingTime <= 0) {
-                    // เมื่อเวลาเดินครบ 3 วินาที ให้สั่งสั่งถ่ายภาพและประมวลผลทันที
-                    await performInference(); 
-                    startTime = Date.now(); // รีเซ็ตเวลาเริ่มต้นใหม่สำหรับรอบถัดไป
+                    await performInference(); // สั่งให้ AI ประมวลผลภาพจากวิดีโอ ณ เสี้ยววินาทีนั้น
+                    startTime = Date.now(); // รีเซ็ตลูปเวลา
                     remainingTime = TOTAL_INTERVAL;
                 }
 
-                // สั่งอัปเดตตัวเลขวิเคราะห์และตัวความยาว Progress bar บนหน้าจอ
                 updateTimerUI(remainingTime);
-            }, 50); 
+            }, 50); // วิ่งลูปย่อยทุกๆ 50ms ให้หลอดสมูท
         }
 
         function updateTimerUI(remaining) {
-            // ควบคุมการแสดงผลตัวเลข เช่น 3.0, 2.5, 1.2 วินาทีบน Dashboard
-            const displayTime = Math.max(0, remaining).toFixed(1);
             document.getElementById("countdown-text").innerText = `00:0${Math.ceil(remaining)}`;
-
-            // คำนวณเปอร์เซ็นต์ความก้าวหน้าเพื่อดึงหลอดสีให้ขยับตามเวลา
             const percentageElapsed = ((TOTAL_INTERVAL - remaining) / TOTAL_INTERVAL) * 100;
             document.getElementById("progress-bar").style.width = `${percentageElapsed}%`;
         }
 
-        // ฟังก์ชันประมวลผลวิเคราะห์รูปภาพผ่านระบบ AI (Inference Mechanism)[cite: 1]
+        // ฟังก์ชันประมวลผลวิเคราะห์รูปภาพ
         async function performInference() {
-            if (!model || !webcam) return;
+            const videoElement = document.getElementById("webcam-video");
+            if (!model || !videoElement.srcObject) return;
 
-            const prediction = await model.predict(webcam.canvas);[cite: 1]
+            // นำแท็ก Video ตรงๆ ส่งไปทำนายผลลัพธ์คลาส[cite: 1]
+            const prediction = await model.predict(videoElement);[cite: 1]
             const nodes = labelContainer.childNodes;
 
             for (let i = 0; i < maxPredictions; i++) {[cite: 1]
@@ -270,7 +266,7 @@
                 const bar = targetNode.querySelector(".class-bar");
                 bar.style.width = displayPercentage;
                 
-                // เปลี่ยนสีแถบพลังแบบไดนามิกตามความมั่นใจของตัวแบบจำลอง (Confidence Weights)
+                // ปรับแต่งสีหลอดตามค่าน้ำหนักความแม่นยำ
                 if (probability > 0.7) {
                     bar.className = "h-full class-bar transition-all duration-300 bg-gradient-to-r from-emerald-500 to-teal-400";
                 } else if (probability > 0.3) {
@@ -280,11 +276,10 @@
                 }
             }
 
-            // บันทึกเวลาแสตมป์นาทีและวินาทีปัจจุบันที่ระบุผลวิเคราะห์สำเร็จ
             const now = new Date();
             document.getElementById("last-update-time").innerText = `อัปเดตล่าสุด: ${now.toLocaleTimeString('th-TH')}`;
 
-            // ทำสถานะไฟกระพริบสั้นๆ (Flash Sign) เป็นการส่งสัญญาณว่าพึ่งรันคำนวณเสร็จ
+            // ทำไฟสีเขียวกระพริบแจ้งเตือน
             const indicator = document.getElementById("flash-indicator");
             indicator.style.opacity = "1";
             setTimeout(() => { indicator.style.opacity = "0"; }, 600);
