@@ -23,7 +23,7 @@
             border: 1px solid rgba(255, 255, 255, 0.08);
         }
         .progress-bar-fill {
-            transition: width 0.4s ease-out;
+            transition: width 0.1s linear; /* ปรับแอนิเมชันให้ไหลลื่นขึ้นสำหรับเวลา 3 วินาที */
         }
         /* ปรับแต่ง Style ของ Canvas กล้องให้สวยงาม */
         #webcam-container canvas {
@@ -45,7 +45,7 @@
                 <h1 class="text-2xl md:text-3xl font-bold bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-transparent">
                     Teachable Machine Vision AI
                 </h1>
-                <p class="text-slate-400 text-sm mt-1">ระบบวิเคราะห์ภาพอัตโนมัติ ทุกๆ 3 นาที (Automated 3-Min Interval Predictor)</p>
+                <p class="text-slate-400 text-sm mt-1">ระบบวิเคราะห์ภาพอัตโนมัติ ทุกๆ 3 วินาที (Fast 3-Sec Interval Predictor)</p>
             </div>
             <div>
                 <span id="system-status" class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium bg-slate-800 text-slate-400 border border-slate-700">
@@ -88,7 +88,7 @@
             <div class="glass-panel p-6 rounded-2xl">
                 <div class="flex justify-between items-center mb-3">
                     <h3 class="text-sm font-semibold text-slate-400 tracking-wider uppercase">รอบการวิเคราะห์ภาพถัดไป</h3>
-                    <span id="countdown-text" class="text-xl font-bold font-mono text-cyan-400">03:00</span>
+                    <span id="countdown-text" class="text-xl font-bold font-mono text-cyan-400">00:03</span>
                 </div>
                 <!-- Progress Bar -->
                 <div class="w-full bg-slate-950 h-3 rounded-full overflow-hidden border border-slate-800">
@@ -96,7 +96,7 @@
                 </div>
                 <div class="flex justify-between text-xs text-slate-500 mt-2">
                     <span id="last-update-time">อัปเดตล่าสุด: ยังไม่มีการเปิดระบบ</span>
-                    <span>ความถี่: ทุกๆ 3 นาที</span>
+                    <span>ความถี่: ทุกๆ 3 วินาที</span>
                 </div>
             </div>
 
@@ -133,20 +133,21 @@
     <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
     
     <script type="text/javascript">
-        // ลิงก์โมเดล Teachable Machine ของคุณ
+        // ลิงก์โมเดล Teachable Machine ของคุณ[cite: 1]
         const URL = "https://teachablemachine.withgoogle.com/models/NkV0wZWoR1/";
 
         let model, webcam, labelContainer, maxPredictions;
         let countdownInterval;
-        let countdownSeconds = 180; // กำหนดวินาที 3 นาที = 180 วินาที
-        const TOTAL_INTERVAL = 180;
+        
+        // แก้ไขที่นี่: ปรับความถี่เป็น 3 วินาที (เปลี่ยนจาก 180 เป็น 3)
+        let countdownSeconds = 3; 
+        const TOTAL_INTERVAL = 3; 
 
-        // ฟังก์ชันเริ่มต้นระบบเมื่อผู้ใช้กดปุ่ม Start
+        // ฟังก์ชันเริ่มต้นระบบเมื่อผู้ใช้กดปุ่ม Start[cite: 1]
         async function initSystem() {
             const startBtn = document.getElementById("start-btn");
             const statusIndicator = document.getElementById("system-status");
             
-            // เปลี่ยนสถานะปุ่มขณะโหลดโมเดลเพื่อป้องกันการกดซ้ำ
             startBtn.disabled = true;
             startBtn.innerText = "กำลังดาวน์โหลดโมเดล AI...";
             startBtn.className = "w-full bg-slate-800 text-slate-500 font-medium py-3 px-6 rounded-xl cursor-not-allowed text-center";
@@ -155,36 +156,33 @@
             statusIndicator.className = "inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20";
 
             try {
-                const modelURL = URL + "model.json";
-                const metadataURL = URL + "metadata.json";
+                const modelURL = URL + "model.json";[cite: 1]
+                const metadataURL = URL + "metadata.json";[cite: 1]
 
-                // โหลดโมเดล AI
-                model = await tmImage.load(modelURL, metadataURL);
-                maxPredictions = model.getTotalClasses();
+                // โหลดโมเดล AI[cite: 1]
+                model = await tmImage.load(modelURL, metadataURL);[cite: 1]
+                maxPredictions = model.getTotalClasses();[cite: 1]
 
-                // ตั้งค่ากล้องเว็บแคม (ปรับขนาดขึ้นเป็น 280px ให้คมชัดสอดคล้องกับ UI ใหม่)
-                const flip = true; 
-                webcam = new tmImage.Webcam(280, 280, flip); 
-                await webcam.setup(); // ขอสิทธิ์เข้าใช้งานกล้องจากเบราว์เซอร์
-                await webcam.play();
+                // ตั้งค่ากล้องเว็บแคม[cite: 1]
+                const flip = true;[cite: 1]
+                webcam = new tmImage.Webcam(280, 280, flip);[cite: 1]
+                await webcam.setup();[cite: 1]
+                await webcam.play();[cite: 1]
 
-                // ซ่อนตัว Placeholder และเปิดแสดงเฟรมกล้องจริง
                 document.getElementById("webcam-placeholder").classList.add("hidden");
                 const webcamBox = document.getElementById("webcam-container");
                 webcamBox.classList.remove("hidden");
-                webcamBox.appendChild(webcam.canvas);
+                webcamBox.appendChild(webcam.canvas);[cite: 1]
 
-                // อัปเดตสถานะที่มุมขวาบน
                 statusIndicator.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Auto Monitoring Active`;
-                statusIndicator.className = "inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
+                statusIndicator.className = "inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-amber-500/20";
                 
                 startBtn.innerText = "ระบบทำงานอัตโนมัติเรียบร้อย";
 
-                // เคลียร์พื้นที่แสดงผลของเดิมและสร้างการ์ดสถานะคลาสต่างๆ แบบ Dynamic
-                labelContainer = document.getElementById("label-container");
+                labelContainer = document.getElementById("label-container");[cite: 1]
                 labelContainer.innerHTML = "";
                 
-                for (let i = 0; i < maxPredictions; i++) {
+                for (let i = 0; i < maxPredictions; i++) {[cite: 1]
                     const row = document.createElement("div");
                     row.className = "bg-slate-900/60 p-3.5 rounded-xl border border-slate-800 flex flex-col gap-1.5";
                     row.innerHTML = `
@@ -196,78 +194,72 @@
                             <div class="bg-indigo-500 h-full w-0 class-bar transition-all duration-500"></div>
                         </div>
                     `;
-                    labelContainer.appendChild(row);
+                    labelContainer.appendChild(row);[cite: 1]
                 }
 
-                // เรียกลูปเฟรมเพื่อให้ภาพบนหน้าจอเคลื่อนไหวลื่นไหลตามกล้องสด
-                window.requestAnimationFrame(webcamLoop);
+                // สตรีมภาพกล้องสดลื่นๆ บนจอ[cite: 1]
+                window.requestAnimationFrame(webcamLoop);[cite: 1]
 
-                // ทำการวิเคราะห์รอบแรกทันทีโดยไม่ต้องรอครบ 3 นาทีแรก
+                // วิเคราะห์ครั้งแรกทันที
                 await performInference();
 
-                // เริ่มลูปนับเวลาถอยหลัง 3 นาที
+                // เริ่มลูปนับเวลาถอยหลังแบบความถี่สูง
                 startTimerLoop();
 
             } catch (error) {
                 console.error("Initialization Failed:", error);
-                alert("ไม่สามารถเข้าถึงกล้องถ่ายภาพ หรือดาวน์โหลดโมเดลได้สำเร็จ กรุณาตรวจสอบสิทธิ์การใช้งานกล้อง");
+                alert("ไม่สามารถเข้าถึงกล้องถ่ายภาพ หรือดาวน์โหลดโมเดลได้สำเร็จ");
                 startBtn.disabled = false;
                 startBtn.innerText = "ลองใหม่อีกครั้ง";
                 startBtn.className = "w-full bg-gradient-to-r from-indigo-500 to-indigo-600 text-white font-medium py-3 px-6 rounded-xl cursor-pointer";
             }
         }
 
-        // ฟังก์ชันอัปเดตข้อมูลภาพในเว็บแคมอย่างต่อเนื่อง (ภาพกล้องสดจะไม่กระตุก)
         async function webcamLoop() {
-            webcam.update();
-            window.requestAnimationFrame(webcamLoop);
+            webcam.update(); // อัปเดตเฟรมกล้องแบบเรียลไทม์[cite: 1]
+            window.requestAnimationFrame(webcamLoop);[cite: 1]
         }
 
-        // ตัวคุมเวลาหลัก (Scheduler Logic)
+        // ตัวคุมเวลาหลัก ปรับปรุงให้ตรวจเช็คย่อยในระดับเสี้ยววินาทีเพื่อให้การเคลื่อนไหวของแถบพลังลื่นไหลขึ้น
         function startTimerLoop() {
-            countdownSeconds = TOTAL_INTERVAL;
-            updateTimerUI();
-
+            let startTime = Date.now();
+            
             if(countdownInterval) clearInterval(countdownInterval);
 
             countdownInterval = setInterval(async () => {
-                countdownSeconds--;
-                
-                if (countdownSeconds <= 0) {
-                    // เมื่อเวลาเหลือน้อยกว่าหรือเท่ากับ 0 ให้ AI วิเคราะห์รูปภาพ ณ วินาทีนั้นทันที
-                    await performInference();
-                    // รีเซ็ตค่าเวลากลับไปเป็น 3 นาทีใหม่
-                    countdownSeconds = TOTAL_INTERVAL;
+                let elapsedTime = (Date.now() - startTime) / 1000; // เวลาที่ผ่านไปเป็นวินาที
+                let remainingTime = TOTAL_INTERVAL - elapsedTime;
+
+                if (remainingTime <= 0) {
+                    await performInference(); // AI ประมวลผลเมื่อครบ 3 วินาที
+                    startTime = Date.now(); // รีเซ็ตจุดเริ่มต้นเวลาใหม่
+                    remainingTime = TOTAL_INTERVAL;
                 }
-                
-                updateTimerUI();
-            }, 1000); // ทำงานทุกๆ 1 วินาทีเพื่ออัปเดต UI นับถอยหลัง
+
+                // อัปเดตหน้าจอตัวเลขและ Progress Bar
+                updateTimerUI(remainingTime);
+            }, 50); // ตรวจสอบสถานะทุกๆ 50ms เพื่อให้หลอดลดลงแบบเนียนๆ
         }
 
-        // ฟังก์ชันวาดค่าระยะเวลาและ Progress bar บนหน้าจอ
-        function updateTimerUI() {
-            const minutes = Math.floor(countdownSeconds / 60);
-            const seconds = countdownSeconds % 60;
-            
-            const formattedTime = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-            document.getElementById("countdown-text").innerText = formattedTime;
+        function updateTimerUI(remaining) {
+            const displayTime = Math.max(0, remaining).toFixed(1);
+            document.getElementById("countdown-text").innerText = `00:0${Math.ceil(remaining)}`;
 
-            const percentageElapsed = ((TOTAL_INTERVAL - countdownSeconds) / TOTAL_INTERVAL) * 100;
+            const percentageElapsed = ((TOTAL_INTERVAL - remaining) / TOTAL_INTERVAL) * 100;
             document.getElementById("progress-bar").style.width = `${percentageElapsed}%`;
         }
 
-        // ฟังก์ชันสั่งให้โมเดลประมวลผลทำนายผลลัพธ์ภาพ (Inference Engine)
+        // ฟังก์ชันสั่งให้โมเดลทำนายผลลัพธ์ภาพ[cite: 1]
         async function performInference() {
             if (!model || !webcam) return;
 
-            // นำภาพ Canvas ล่าสุดของกล้องส่งให้ Teachable Machine คำนวณ
-            const prediction = await model.predict(webcam.canvas);
+            const prediction = await model.predict(webcam.canvas);[cite: 1]
             const nodes = labelContainer.childNodes;
 
-            for (let i = 0; i < maxPredictions; i++) {
-                const className = prediction[i].className;
-                const probability = prediction[i].probability;
-                const displayPercentage = (probability * 100).toFixed(1) + "%";
+            for (let i = 0; i < maxPredictions; i++) {[cite: 1]
+                const className = prediction[i].className;[cite: 1]
+                const probability = prediction[i].probability;[cite: 1]
+                const displayPercentage = (probability * 100).toFixed(1) + "%";[cite: 1]
 
                 const targetNode = nodes[i];
                 targetNode.querySelector(".class-name").innerText = className;
@@ -276,24 +268,22 @@
                 const bar = targetNode.querySelector(".class-bar");
                 bar.style.width = displayPercentage;
                 
-                // ไฮไลต์เปลี่ยนสีหลอดตามน้ำหนักความน่าจะเป็น (Confidence Score)
                 if (probability > 0.7) {
-                    bar.className = "h-full class-bar transition-all duration-500 bg-gradient-to-r from-emerald-500 to-teal-400";
+                    bar.className = "h-full class-bar transition-all duration-300 bg-gradient-to-r from-emerald-500 to-teal-400";
                 } else if (probability > 0.3) {
-                    bar.className = "h-full class-bar transition-all duration-500 bg-gradient-to-r from-amber-500 to-orange-400";
+                    bar.className = "h-full class-bar transition-all duration-300 bg-gradient-to-r from-amber-500 to-orange-400";
                 } else {
-                    bar.className = "h-full class-bar transition-all duration-500 bg-slate-700";
+                    bar.className = "h-full class-bar transition-all duration-300 bg-slate-700";
                 }
             }
 
-            // บันทึกเวลาที่ทำการอัปเดต
             const now = new Date();
             document.getElementById("last-update-time").innerText = `อัปเดตล่าสุด: ${now.toLocaleTimeString('th-TH')}`;
 
-            // ทำเอฟเฟกต์กระพริบสีเขียวเล็กๆ ว่าตัววิเคราะห์พึ่งทำงานเสร็จสิ้น
+            // กะพริบแจ้งเตือนสถานะความสำเร็จ
             const indicator = document.getElementById("flash-indicator");
             indicator.style.opacity = "1";
-            setTimeout(() => { indicator.style.opacity = "0"; }, 1500);
+            setTimeout(() => { indicator.style.opacity = "0"; }, 600);
         }
     </script>
 </body>
