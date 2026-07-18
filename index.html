@@ -4,9 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Vision Dashboard - Teachable Machine</title>
-    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -22,11 +20,8 @@
             backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.08);
         }
-        .progress-bar-fill {
-            transition: width 0.05s linear;
-        }
         video {
-            transform: scaleX(-1); /* กลับด้านกระจกเพื่อความคุ้นเคย */
+            transform: scaleX(-1);
             width: 100%;
             height: 100%;
             object-fit: cover;
@@ -42,18 +37,18 @@
                 <h1 class="text-2xl md:text-3xl font-bold bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-transparent">
                     Teachable Machine Vision AI
                 </h1>
-                <p class="text-slate-400 text-sm mt-1">ระบบวิเคราะห์ภาพอัตโนมัติ ทุกๆ 3 วินาที (Fast 3-Sec Interval Predictor)</p>
+                <p class="text-slate-400 text-sm mt-1">ระบบวิเคราะห์ภาพอัตโนมัติ ทุกๆ 3 วินาที</p>
             </div>
             <div>
                 <span id="system-status" class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium bg-slate-800 text-slate-400 border border-slate-700">
                     <span class="w-2 h-2 rounded-full bg-slate-500"></span>
-                    สแตนด์บายรอเปิดระบบ
+                    Ready to Start (กดปุ่มด้านล่างเพื่อเริ่มระบบ)
                 </span>
             </div>
         </div>
     </header>
 
-    <!-- Error Alert Banner (ซ่อนไว้ก่อน จะแสดงเมื่อเกิดปัญหา) -->
+    <!-- Error Alert Banner -->
     <div id="error-banner" class="w-full max-w-5xl mx-auto mb-6 bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-xl text-sm hidden">
         <strong>พบข้อผิดพลาด:</strong> <span id="error-message"></span>
     </div>
@@ -64,18 +59,14 @@
         <!-- Left Column: Camera Screen -->
         <div class="md:col-span-5 glass-panel p-6 rounded-2xl flex flex-col items-center">
             <h2 class="text-lg font-semibold text-slate-200 mb-4 self-start flex items-center gap-2">
-                <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
-                กล้องวิดีโอสด
+                Live Camera Stream
             </h2>
             
-            <!-- Webcam HTML5 Container -->
-            <div class="relative w-full aspect-square max-w-[280px] bg-slate-950 rounded-xl flex items-center justify-center overflow-hidden border border-indigo-500/30 shadow-lg shadow-indigo-500/5 mb-6">
-                <!-- ใช้ Video Tag ตรงๆ เพื่อความเสถียรสูงสุด -->
+            <div class="relative w-full aspect-square max-w-[280px] bg-slate-950 rounded-xl flex items-center justify-center overflow-hidden border border-indigo-500/30 mb-6">
                 <video id="webcam-video" autoplay playsinline muted></video>
             </div>
 
-            <!-- Start Button -->
-            <button type="button" id="start-btn" onclick="initSystem()" class="w-full bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white font-medium py-3 px-6 rounded-xl transition duration-200 shadow-lg shadow-indigo-500/20 active:scale-[0.98] cursor-pointer text-center">
+            <button type="button" id="start-btn" onclick="initSystem()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 px-6 rounded-xl transition duration-200 shadow-lg cursor-pointer text-center">
                 เริ่มต้นทำงานระบบอัตโนมัติ
             </button>
         </div>
@@ -89,21 +80,19 @@
                     <h3 class="text-sm font-semibold text-slate-400 tracking-wider uppercase">รอบการวิเคราะห์ภาพถัดไป</h3>
                     <span id="countdown-text" class="text-xl font-bold font-mono text-cyan-400">00:03</span>
                 </div>
-                <!-- Progress Bar -->
                 <div class="w-full bg-slate-950 h-3 rounded-full overflow-hidden border border-slate-800">
-                    <div id="progress-bar" class="progress-bar-fill bg-gradient-to-r from-indigo-500 to-cyan-400 h-full w-0"></div>
+                    <div id="progress-bar" class="bg-gradient-to-r from-indigo-500 to-cyan-400 h-full w-0 transition-all duration-75"></div>
                 </div>
                 <div class="flex justify-between text-xs text-slate-500 mt-2">
-                    <span id="last-update-time">อัปเดตล่าสุด: ยังไม่มีการเปิดระบบ</span>
+                    <span id="last-update-time">อัปเดตล่าสุด: ยังไม่ได้เริ่มตรวจจับ</span>
                     <span>ความถี่: ทุกๆ 3 วินาที</span>
                 </div>
             </div>
 
-            <!-- Analysis Predictions Card -->
+            <!-- Analysis Predictions Card (แกนสถานะแสดงรอไว้ทันที ไม่ต้องรอดาวน์โหลด) -->
             <div class="glass-panel p-6 rounded-2xl">
                 <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-lg font-semibold text-slate-200 flex items-center gap-2">
-                        <svg class="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                    <h3 class="text-lg font-semibold text-slate-200">
                         ผลลัพธ์การจำแนกสถานะ (AI Inference)
                     </h3>
                     <div id="flash-indicator" class="text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded opacity-0 transition-opacity duration-300">
@@ -111,10 +100,39 @@
                     </div>
                 </div>
                 
-                <!-- Dynamic Labels Inject Target -->
+                <!-- แสดงแกนสถานะของ Class ทั้งหมดจากโมเดลของคุณไว้รอเลย -->
                 <div id="label-container" class="space-y-4">
-                    <div class="text-slate-500 text-sm italic text-center py-6">
-                        รอกระตุ้นระบบเพื่อรับข้อมูลแจกแจงความน่าจะเป็น...
+                    <!-- Class 1: ปกติ -->
+                    <div class="bg-slate-900/60 p-3.5 rounded-xl border border-slate-800 flex flex-col gap-1.5 data-row" data-class="ปกติ">
+                        <div class="flex justify-between items-center text-sm">
+                            <span class="font-medium text-slate-300">ปกติ</span>
+                            <span class="font-mono text-xs font-bold text-slate-400 class-percentage">0.0%</span>
+                        </div>
+                        <div class="w-full bg-slate-950 h-2 rounded-full overflow-hidden">
+                            <div class="bg-slate-700 h-full w-0 class-bar transition-all duration-300"></div>
+                        </div>
+                    </div>
+
+                    <!-- Class 2: ไม่ใส่หมวก -->
+                    <div class="bg-slate-900/60 p-3.5 rounded-xl border border-slate-800 flex flex-col gap-1.5 data-row" data-class="ไม่ใส่หมวก">
+                        <div class="flex justify-between items-center text-sm">
+                            <span class="font-medium text-slate-300">ไม่ใส่หมวก</span>
+                            <span class="font-mono text-xs font-bold text-slate-400 class-percentage">0.0%</span>
+                        </div>
+                        <div class="w-full bg-slate-950 h-2 rounded-full overflow-hidden">
+                            <div class="bg-slate-700 h-full w-0 class-bar transition-all duration-300"></div>
+                        </div>
+                    </div>
+
+                    <!-- Class 3: ไม่ใส่แมส -->
+                    <div class="bg-slate-900/60 p-3.5 rounded-xl border border-slate-800 flex flex-col gap-1.5 data-row" data-class="ไม่ใส่แมส">
+                        <div class="flex justify-between items-center text-sm">
+                            <span class="font-medium text-slate-300">ไม่ใส่แมส</span>
+                            <span class="font-mono text-xs font-bold text-slate-400 class-percentage">0.0%</span>
+                        </div>
+                        <div class="w-full bg-slate-950 h-2 rounded-full overflow-hidden">
+                            <div class="bg-slate-700 h-full w-0 class-bar transition-all duration-300"></div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -122,53 +140,32 @@
         </div>
     </main>
 
-    <!-- Footer -->
-    <footer class="w-full text-center text-xs text-slate-600 mt-8 border-t border-slate-900 pt-4">
-        Powered by TensorFlow.js & Teachable Machine • Robust Camera Protocol
-    </footer>
-
-    <!-- โหลดไลบรารีเวอร์ชันที่เสถียรที่สุด -->
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.18.0/dist/tf.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@0.8.5/dist/teachablemachine-image.min.js"></script>
     
     <script type="text/javascript">
-        // ลิงก์โมเดลของคุณ[cite: 1]
-        const MODEL_URL = "https://teachablemachine.withgoogle.com/models/NkV0wZWoR1/";
+        const MODEL_URL = "https://teachablemachine.withgoogle.com/models/NkV0wZWoR1/";[cite: 1]
+        let model, countdownInterval;
+        const TOTAL_INTERVAL = 3; 
 
-        let model, maxPredictions, labelContainer;
-        let countdownInterval;
-        const TOTAL_INTERVAL = 3; // 3 วินาที
-
-        // ฟังก์ชันซ่อน/แสดงหน้าต่างแจ้ง Error
         function showError(msg) {
             const banner = document.getElementById("error-banner");
             document.getElementById("error-message").innerText = msg;
             banner.classList.remove("hidden");
         }
 
-        // ฟังก์ชันหลักเริ่มทำงาน
         async function initSystem() {
             const startBtn = document.getElementById("start-btn");
             const statusIndicator = document.getElementById("system-status");
             const videoElement = document.getElementById("webcam-video");
             
-            // ล้างหน้าต่างแจ้ง Error เดิมถ้ามี
             document.getElementById("error-banner").classList.add("hidden");
-
             startBtn.disabled = true;
-            startBtn.innerText = "กำลังเชื่อมต่อระบบ...";
-            startBtn.className = "w-full bg-slate-800 text-slate-500 font-medium py-3 px-6 rounded-xl cursor-not-allowed text-center";
-            
+            startBtn.innerText = "กำลังเชื่อมต่อระบบ AI...";
             statusIndicator.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span> โหลดโมเดล...`;
 
             try {
-                // 1. โหลดโมเดล AI
-                const modelJson = MODEL_URL + "model.json";[cite: 1]
-                const metadataJson = MODEL_URL + "metadata.json";[cite: 1]
-                model = await tmImage.load(modelJson, metadataJson);[cite: 1]
-                maxPredictions = model.getTotalClasses();[cite: 1]
-
-                // 2. เรียกเปิดกล้องเว็บแคมผ่านสิทธิ์ดั้งเดิมของเบราว์เซอร์ (Native Web API) เพื่อความชัวร์
+                // 1. เปิดกล้องเว็บแคม (Native Web API)
                 if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
                     const stream = await navigator.mediaDevices.getUserMedia({
                         video: { width: 280, height: 280, facingMode: "user" },
@@ -176,51 +173,29 @@
                     });
                     videoElement.srcObject = stream;
                 } else {
-                    throw new Error("เบราว์เซอร์นี้ไม่รองรับระบบการเข้าถึงกล้อง (Webcam API)");
+                    throw new Error("เบราว์เซอร์ไม่รองรับสิทธิ์การเข้าถึงกล้อง (Webcam API)");
                 }
 
-                // 3. ปรับเปลี่ยนสถานะ UI บนหน้าจอ
+                // 2. โหลดโมเดล AI ของคุณ[cite: 1]
+                model = await tmImage.load(MODEL_URL + "model.json", MODEL_URL + "metadata.json");[cite: 1]
+
+                // 3. อัปเดตสถานะ UI
                 statusIndicator.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> ตรวจจับอัตโนมัติ`;
-                statusIndicator.className = "inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
                 startBtn.innerText = "ระบบกำลังตรวจจับทุกๆ 3 วินาที";
 
-                // 4. สร้างการ์ดแสดงเปอร์เซ็นต์
-                labelContainer = document.getElementById("label-container");[cite: 1]
-                labelContainer.innerHTML = "";
-                for (let i = 0; i < maxPredictions; i++) {[cite: 1]
-                    const row = document.createElement("div");
-                    row.className = "bg-slate-900/60 p-3.5 rounded-xl border border-slate-800 flex flex-col gap-1.5";
-                    row.innerHTML = `
-                        <div class="flex justify-between items-center text-sm">
-                            <span class="font-medium text-slate-300 class-name">-</span>
-                            <span class="font-mono text-xs font-bold text-indigo-400 class-percentage">0.00%</span>
-                        </div>
-                        <div class="w-full bg-slate-950 h-2 rounded-full overflow-hidden">
-                            <div class="bg-indigo-500 h-full w-0 class-bar transition-all duration-300"></div>
-                        </div>
-                    `;
-                    labelContainer.appendChild(row);[cite: 1]
-                }
-
-                // สั่งวิเคราะห์รอบแรกทันทีเมื่อเปิดระบบสำเร็จ
+                // รันวิเคราะห์รอบแรกทันทีและเริ่มลูปนับถอยหลัง
                 await performInference();
-
-                // 5. เริ่มต้นลูปนับถอยหลัง 3 วินาที
                 startTimerLoop();
 
             } catch (error) {
-                console.error("System Error:", error);
-                showError(error.message || "ไม่สามารถดึงข้อมูลกล้องได้ กรุณาตรวจสอบการอนุญาตให้สิทธิ์ใช้งานกล้อง");
-                
-                // คืนสถานะปุ่มกดให้กดใหม่ได้
+                console.error(error);
+                showError("เกิดข้อผิดพลาด: กรุณากดปุ่มแม่กุญแจที่แถบ URL บนสุดเพื่อ 'อนุญาต (Allow)' ให้สิทธิ์เข้าถึงกล้อง หรือเปิดไฟล์ผ่านโปรแกรมจำลอง Server");
                 startBtn.disabled = false;
                 startBtn.innerText = "ลองใหม่อีกครั้ง";
-                startBtn.className = "w-full bg-gradient-to-r from-indigo-500 to-indigo-600 text-white font-medium py-3 px-6 rounded-xl cursor-pointer";
                 statusIndicator.innerHTML = `<span class="w-2 h-2 rounded-full bg-red-500"></span> ระบบขัดข้อง`;
             }
         }
 
-        // ระบบจับเวลานับถอยหลัง 3 วินาทีประสิทธิภาพสูง
         function startTimerLoop() {
             let startTime = Date.now();
             if(countdownInterval) clearInterval(countdownInterval);
@@ -230,56 +205,46 @@
                 let remainingTime = TOTAL_INTERVAL - elapsedTime;
 
                 if (remainingTime <= 0) {
-                    await performInference(); // สั่งให้ AI ประมวลผลภาพจากวิดีโอ ณ เสี้ยววินาทีนั้น
-                    startTime = Date.now(); // รีเซ็ตลูปเวลา
+                    await performInference();
+                    startTime = Date.now();
                     remainingTime = TOTAL_INTERVAL;
                 }
 
-                updateTimerUI(remainingTime);
-            }, 50); // วิ่งลูปย่อยทุกๆ 50ms ให้หลอดสมูท
+                document.getElementById("countdown-text").innerText = `00:0${Math.ceil(remainingTime)}`;
+                document.getElementById("progress-bar").style.width = `${((TOTAL_INTERVAL - remainingTime) / TOTAL_INTERVAL) * 100}%`;
+            }, 50);
         }
 
-        function updateTimerUI(remaining) {
-            document.getElementById("countdown-text").innerText = `00:0${Math.ceil(remaining)}`;
-            const percentageElapsed = ((TOTAL_INTERVAL - remaining) / TOTAL_INTERVAL) * 100;
-            document.getElementById("progress-bar").style.width = `${percentageElapsed}%`;
-        }
-
-        // ฟังก์ชันประมวลผลวิเคราะห์รูปภาพ
         async function performInference() {
             const videoElement = document.getElementById("webcam-video");
             if (!model || !videoElement.srcObject) return;
 
-            // นำแท็ก Video ตรงๆ ส่งไปทำนายผลลัพธ์คลาส[cite: 1]
             const prediction = await model.predict(videoElement);[cite: 1]
-            const nodes = labelContainer.childNodes;
-
-            for (let i = 0; i < maxPredictions; i++) {[cite: 1]
-                const className = prediction[i].className;[cite: 1]
-                const probability = prediction[i].probability;[cite: 1]
+            
+            // วนลูปจับคู่ผลลัพธ์จาก AI กับแกนสถานะที่เตรียมไว้บนหน้าจอ
+            prediction.forEach(pred => {
+                const className = pred.className;[cite: 1]
+                const probability = pred.probability;[cite: 1]
                 const displayPercentage = (probability * 100).toFixed(1) + "%";[cite: 1]
 
-                const targetNode = nodes[i];
-                targetNode.querySelector(".class-name").innerText = className;
-                targetNode.querySelector(".class-percentage").innerText = displayPercentage;
-                
-                const bar = targetNode.querySelector(".class-bar");
-                bar.style.width = displayPercentage;
-                
-                // ปรับแต่งสีหลอดตามค่าน้ำหนักความแม่นยำ
-                if (probability > 0.7) {
-                    bar.className = "h-full class-bar transition-all duration-300 bg-gradient-to-r from-emerald-500 to-teal-400";
-                } else if (probability > 0.3) {
-                    bar.className = "h-full class-bar transition-all duration-300 bg-gradient-to-r from-amber-500 to-orange-400";
-                } else {
-                    bar.className = "h-full class-bar transition-all duration-300 bg-slate-700";
+                // ค้นหาแถวตามชื่อคลาสภาษาไทย
+                const row = document.querySelector(`.data-row[data-class="${className}"]`);
+                if (row) {
+                    row.querySelector(".class-percentage").innerText = displayPercentage;
+                    const bar = row.querySelector(".class-bar");
+                    bar.style.width = displayPercentage;
+
+                    if (probability > 0.7) {
+                        bar.className = "h-full class-bar transition-all duration-300 bg-emerald-500";
+                    } else if (probability > 0.3) {
+                        bar.className = "h-full class-bar transition-all duration-300 bg-amber-500";
+                    } else {
+                        bar.className = "h-full class-bar transition-all duration-300 bg-slate-700";
+                    }
                 }
-            }
+            });
 
-            const now = new Date();
-            document.getElementById("last-update-time").innerText = `อัปเดตล่าสุด: ${now.toLocaleTimeString('th-TH')}`;
-
-            // ทำไฟสีเขียวกระพริบแจ้งเตือน
+            document.getElementById("last-update-time").innerText = `อัปเดตล่าสุด: ${new Date().toLocaleTimeString('th-TH')}`;
             const indicator = document.getElementById("flash-indicator");
             indicator.style.opacity = "1";
             setTimeout(() => { indicator.style.opacity = "0"; }, 600);
